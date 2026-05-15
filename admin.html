@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KinkList ✦ — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0d0d12; --surface:#17171f; --surface2:#21212e; --surface3:#2a2a3a;
+      --border:#2d2d42; --accent:#b57bee; --accent2:#f472b6; --accentglow:rgba(181,123,238,0.18);
+      --text:#ede9ff; --muted:#7a7a9a; --faint:#3a3a52;
+      --absolute:#c084fc; --love:#4ade80; --ok:#fbbf24; --maybe:#fb923c; --no:#f87171;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    h1,h2,h3,.serif{font-family:'DM Serif Display',serif}
+
+    /* LOGIN */
+    #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:radial-gradient(ellipse 100% 70% at 50% -10%,#2a1040 0%,var(--bg) 65%)}
+    .login-card{background:var(--surface);border:1px solid var(--border);border-radius:28px;
+      padding:52px 44px;width:100%;max-width:400px;box-shadow:0 40px 100px rgba(0,0,0,0.7)}
+    .login-card h1{font-size:2rem;margin-bottom:6px}
+    .login-sub{color:var(--muted);font-size:0.85rem;margin-bottom:32px}
+    .field-label{font-size:0.8rem;color:var(--muted);margin-bottom:6px;display:block}
+    .input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+      padding:12px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;
+      outline:none;transition:border-color .2s;margin-bottom:14px}
+    .input:focus{border-color:var(--accent)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      background:var(--accent);color:#1a0030;font-family:'DM Sans',sans-serif;font-weight:600;
+      font-size:0.9rem;border:none;border-radius:12px;padding:12px 22px;cursor:pointer;
+      transition:opacity .2s,transform .1s;white-space:nowrap;width:100%}
+    .btn:hover:not(:disabled){opacity:.88;transform:translateY(-1px)}
+    .btn:disabled{opacity:.35;cursor:not-allowed}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);width:auto}
+    .btn-ghost:hover{border-color:var(--accent);background:var(--accentglow)}
+    .btn-sm{padding:7px 14px;font-size:0.82rem;border-radius:9px;width:auto}
+    .err-msg{color:#f87171;font-size:0.82rem;margin-top:6px;text-align:center}
+
+    /* DASHBOARD */
+    #dashboard{display:none}
+    .topbar{position:sticky;top:0;z-index:100;background:rgba(13,13,18,.94);
+      backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:10px 24px}
+    .topbar-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;
+      justify-content:space-between;gap:12px}
+    .topbar-logo{font-size:1.15rem;font-family:'DM Serif Display',serif}
+    .topbar-right{display:flex;align-items:center;gap:12px}
+    .admin-badge{background:var(--accentglow);border:1px solid var(--accent);
+      border-radius:99px;padding:4px 12px;font-size:0.75rem;color:var(--accent)}
+
+    .main{max-width:1400px;margin:0 auto;padding:28px 24px}
+
+    /* STATS BAR */
+    .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+    @media(max-width:700px){.stats-bar{grid-template-columns:repeat(2,1fr)}}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+      padding:18px 20px;text-align:center}
+    .stat-val{font-size:1.8rem;font-weight:700;font-family:'DM Serif Display',serif;color:var(--accent)}
+    .stat-lbl{font-size:0.75rem;color:var(--muted);margin-top:4px}
+
+    /* SEARCH & FILTERS */
+    .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+    .search-wrap{position:relative;flex:1;min-width:200px}
+    .search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);
+      width:15px;height:15px;color:var(--muted);pointer-events:none}
+    .search-wrap .input{padding-left:36px;margin:0}
+
+    /* LAYOUT */
+    .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+    /* USER LIST */
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+    .panel-hd{background:var(--surface2);padding:14px 18px;font-family:'DM Serif Display',serif;
+      font-size:1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;
+      justify-content:space-between}
+    .panel-body{padding:12px}
+    .user-btn{width:100%;background:transparent;border:1px solid transparent;border-radius:12px;
+      padding:12px 14px;text-align:left;cursor:pointer;color:var(--text);
+      font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;
+      align-items:center;justify-content:space-between;margin-bottom:6px}
+    .user-btn:hover{border-color:var(--border);background:var(--surface2)}
+    .user-btn.active{border-color:var(--accent);background:var(--accentglow)}
+    .u-name{font-weight:600;font-size:0.9rem}
+    .u-meta{font-size:0.73rem;color:var(--muted);margin-top:2px}
+    .u-pct{background:var(--accent);color:#1a0030;font-size:0.72rem;
+      font-weight:700;border-radius:99px;padding:3px 9px;white-space:nowrap}
+
+    /* USER DETAIL */
+    .detail-hd{display:flex;align-items:center;justify-content:space-between;
+      flex-wrap:wrap;gap:12px;margin-bottom:18px}
+    .detail-hd h2{font-size:1.5rem}
+    .mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
+    .mini-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .mini-lbl{font-size:0.72rem;color:var(--muted);margin-bottom:3px}
+    .mini-val{font-size:1.2rem;font-weight:700;font-family:'DM Serif Display',serif}
+
+    /* CATEGORY ACCORDION */
+    .cat-section{margin-bottom:8px;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    .cat-hd{display:flex;align-items:center;justify-content:space-between;
+      background:var(--surface2);padding:12px 16px;cursor:pointer;user-select:none;transition:background .15s}
+    .cat-hd:hover{background:var(--surface3)}
+    .cat-title{font-family:'DM Serif Display',serif;font-size:1rem}
+    .cat-meta{display:flex;align-items:center;gap:8px}
+    .cat-pct-bar{width:80px;height:6px;background:var(--faint);border-radius:99px;overflow:hidden}
+    .cat-pct-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+    .cat-pct-txt{font-size:0.75rem;color:var(--muted)}
+    .cat-chevron{color:var(--muted);transition:transform .2s;font-size:0.9rem}
+    .cat-hd.open .cat-chevron{transform:rotate(180deg)}
+    .cat-body{display:none;padding:8px}
+    .cat-body.open{display:block}
+
+    /* ANSWER ITEMS */
+    .ans-row{display:flex;align-items:center;justify-content:space-between;
+      padding:8px 10px;border-radius:9px;transition:background .12s;font-size:0.83rem}
+    .ans-row:hover{background:var(--surface3)}
+    .ans-name{color:var(--text);flex:1}
+    .ans-side{color:var(--muted);font-size:0.75rem;margin:0 10px}
+    .ans-badge{border-radius:99px;padding:3px 10px;font-size:0.72rem;font-weight:600;white-space:nowrap}
+    .ans-row.unknown{opacity:.4}
+
+    /* HISTORY TAB */
+    .tabs{display:flex;gap:4px;background:var(--surface2);border-radius:10px;
+      padding:4px;margin-bottom:16px}
+    .tab{flex:1;background:none;border:none;color:var(--muted);
+      font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;
+      padding:8px 12px;border-radius:8px;cursor:pointer;transition:all .2s;white-space:nowrap}
+    .tab.active{background:var(--surface);color:var(--text)}
+    .pane{display:none}.pane.active{display:block}
+
+    .hist-item{background:var(--surface2);border:1px solid var(--border);border-radius:11px;
+      padding:11px 14px;margin-bottom:7px;font-size:0.82rem}
+    .hist-top{display:flex;justify-content:space-between;margin-bottom:5px;align-items:center}
+    .hist-user{font-weight:600}
+    .hist-date{color:var(--muted);font-size:0.74rem}
+    .hist-pill{border-radius:99px;padding:2px 9px;font-size:0.72rem;font-weight:600}
+
+    /* EMPTY / LOADING */
+    .empty{text-align:center;padding:40px;color:var(--muted);font-size:0.88rem}
+    .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--faint);
+      border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* TOAST */
+    #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+      background:var(--surface2);border:1px solid var(--border);border-radius:11px;
+      padding:11px 22px;font-size:0.88rem;z-index:999;transition:transform .28s ease;
+      pointer-events:none;white-space:nowrap}
+    #toast.show{transform:translateX(-50%) translateY(0)}
+
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:var(--surface)}
+    ::-webkit-scrollbar-thumb{background:var(--faint);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>KinkList ✦</h1>
+    <p class="login-sub">Tableau de bord admin — accès privé</p>
+    <label class="field-label">Mot de passe admin</label>
+    <input class="input" id="pwd-input" type="password" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="btn" onclick="doLogin()" id="login-btn">Connexion →</button>
+    <div class="err-msg hidden" id="err-msg">❌ Mot de passe incorrect</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="topbar-logo">KinkList ✦ Admin</span>
+      <div class="topbar-right">
+        <span class="admin-badge">🛡 Admin connecté</span>
+        <button class="btn btn-ghost btn-sm" onclick="refresh()">🔄 Actualiser</button>
+        <button class="btn btn-ghost btn-sm" onclick="logout()">Déconnexion</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- STATS -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-val" id="st-total">—</div>
+        <div class="stat-lbl">Profils au total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="st-today">—</div>
+        <div class="stat-lbl">Nouveaux aujourd'hui</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="st-avg">—</div>
+        <div class="stat-lbl">Complétion moyenne</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="st-hist">—</div>
+        <div class="stat-lbl">Actions enregistrées</div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="input" id="user-search" placeholder="Rechercher un pseudo…" oninput="filterUsers()" style="margin:0"/>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- USER LIST -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span>Profils</span>
+          <span id="user-count" style="font-size:0.8rem;color:var(--muted)"></span>
+        </div>
+        <div class="panel-body" id="user-list">
+          <div class="empty"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+      <!-- DETAIL -->
+      <div class="panel" id="detail-panel">
+        <div class="panel-hd">Détail du profil</div>
+        <div class="panel-body">
+          <div class="empty" id="detail-empty">← Sélectionne un profil</div>
+          <div class="hidden" id="detail-content">
+            <div class="detail-hd">
+              <h2 id="d-name">—</h2>
+              <button class="btn btn-ghost btn-sm" onclick="exportUser()">⬇ Exporter CSV</button>
+            </div>
+            <div class="mini-stats">
+              <div class="mini-card">
+                <div class="mini-lbl">Email</div>
+                <div class="mini-val" id="d-email" style="font-size:0.85rem;word-break:break-all">—</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-lbl">Complétion</div>
+                <div class="mini-val" id="d-pct">—</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-lbl">Dernière mise à jour</div>
+                <div class="mini-val" id="d-date" style="font-size:0.8rem">—</div>
+              </div>
+            </div>
+
+            <div class="tabs">
+              <button class="tab active" id="tab-answers" onclick="switchDetailTab('answers')">✦ Réponses</button>
+              <button class="tab" id="tab-history" onclick="switchDetailTab('history')">🕐 Historique</button>
+            </div>
+
+            <div class="pane active" id="pane-answers">
+              <div id="answers-content"></div>
+            </div>
+            <div class="pane" id="pane-history">
+              <div id="history-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  CONFIG - même structure que index.html
+// ═══════════════════════════════════════════════════
+const OPTIONS = [
+  {key:'absolute', label:'Absolument', color:'#c084fc'},
+  {key:'love',     label:'J\'adore',   color:'#4ade80'},
+  {key:'ok',       label:'Pourquoi pas', color:'#fbbf24'},
+  {key:'maybe',    label:'Peut-être',  color:'#fb923c'},
+  {key:'no',       label:'Non',        color:'#f87171'},
+  {key:'unknown',  label:'?',          color:'#3a3a52'},
+];
+
+const DATA = {
+  'Pratiques sexuelles':{mode:'single',items:['Sexe vaginal','Masturbation mutuelle','Sexe oral (donner)','Sexe oral (recevoir)','69','Massage érotique','Frottement','Cunilingus','Fellatio','Soixante-neuf','Sexe dans le noir','Sexe devant un miroir','Sexe dans la voiture','Sexe dans la douche','Sexe au téléphone / vidéo','Cybersexe','Sextage','Partouze','Échangisme']},
+  'Corps & plaisir':{mode:'single',items:['Jeux de seins','Jeux de pieds','Lèche-corps complet','Jeux sur le cou','Mordillements doux','Zones érogènes inattendues','Massage tantrique','Cunnilingus profond','Fellation profonde']},
+  'Pratiques anales':{mode:'dual',items:['Pénétration anale','Sextoys','Sodomie (par un homme)','Chevillage (Pegging)','Anulingus','Double pénétration','Fisting','Massage de la prostate','Dilatation anale']},
+  'Sextoys':{mode:'dual',items:['Godemichet','Vibromasseur','Plug anal','Oeuf Vibrant','Stimulateur clitoridien','Masseur prostatique','Cockring','Gaine pénienne','Sextoy connecté','Gode ceinture','Masturbateur','Finition réaliste','Taille imposante']},
+  'Bondage & restrictions':{mode:'dual',items:['Collier','Laisse','Bandeau','Menottes légère','Menottes en métal','Bondage léger','Bondage lourd','Cordes (Kinbaku)','Armbinders','Harnais','Camisole de force','Barres d\'écartement','Bâillon','Cagoule intégrale']},
+  'Bondage & pratiques':{mode:'dual',items:['Mains attachées (dos)','Mains attachées (devant)','Pieds attachés','Attaché(e) sur lit','Attaché(e) sur banc de fessée','Attaché(e) sur chaise','Suspension','Croix de St. André','Pilori','Momification','Enfermement','Vacbed','Film alimentaire','Dormir attachée','Tenue en laisse']},
+  'Domination & soumission':{mode:'dual',items:['Domination','Soumission','Servitude domestique','Esclavage sexuel','Regression (Age Play)','Discipline','Contrôle des orgasmes','Déni d\'orgasme','Traite de sperme','Echange de pouvoir','Bijoux symboliques','Masturbation forcée','Orgasmes forcés','Être partagé(e)','Jeu de partage','Être dominé(e) par plusieurs','Participer au contrôle']},
+  'Hypnose Érotique':{mode:'dual',items:['Hypnose légère','Hypnose profonde','Orgasmes hypnotiques','Implantation de triggers','Soumission','Devotion','Conditionnement','Dronification','Chasteté','Masturbation & JOI']},
+  'Non-consentement consenti':{mode:'dual',items:['Simulation de viol','Coercition','Kidnapping','Alcool','Drogues & Somnifères','Sexe pendant le sommeil','Orgasmes forcés']},
+  'Fantasmes surréalistes':{mode:'dual',items:['Futanari','Furry','Gigantisme','Transformation','Tentacules','Monstres & Aliens']},
+  'Jeux de fluides':{mode:'dual',items:['Cyprine','Liquide séminal','Avaler le sperme','Felching','Éjaculation faciale','Éjaculation sur le corps','Éjaculation féminine','Bukkake','Douche dorée','Lactation','Sang']},
+  'Dégradation':{mode:'dual',items:['Glory hole','Table de traite','Soumission en public','Humiliation','Contrôle utilisation WC','Transformation en objet','Jeu de pouvoir','Lâcher prise contrôlé']},
+  'Préférences de stimulation':{mode:'dual',items:['Stimulation génitale','Stimulation des fesses','Stimulation des pieds','Chatouilles','Sensation play','Electro stimulation','Privation sensorielle']},
+  'Autres fétichismes':{mode:'dual',items:['Fister','Gangbang','Contrôle de la respiration','Ejaculation interne','Enceinte','Féminisation','Cuckold / Cuckquean','Jeux de rôles','Chasteté','Rituels et mantras','Pony Play','Pet Play','Exhibitionisme','Voyeurisme','Sexe en extérieur']},
+  'Douleur':{mode:'dual',items:['Douleur légère','Douleur importante','Pinces à seins','Pinces à Linge','Aiguilles','Cane / badine','Martinet','Paddles','Cravache','Fouet','Fessée','Gifles','Gifles sur Pénis/Vulve','Torture de Pénis/Vulve','Cire & bougies','Griffures','Cut play','Morsure']},
+};
+
+// Total réponses possibles
+const TOTAL = Object.values(DATA).reduce((a,c)=>a+(c.mode==='dual'?c.items.length*2:c.items.length),0);
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let adminToken = null;
+let allUsers = [];
+let allHistory = [];
+let selectedUser = null;
+let currentDetailTab = 'answers';
+
+// ═══════════════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════════════
+async function doLogin() {
+  const pwd = document.getElementById('pwd-input').value;
+  if (!pwd) return;
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Connexion…';
+  document.getElementById('err-msg').classList.add('hidden');
+
+  try {
+    const resp = await fetch('/api/admin-data', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'login', password: pwd})
+    });
+    const data = await resp.json();
+    if (resp.ok && data.token) {
+      adminToken = data.token;
+      sessionStorage.setItem('admin_token', adminToken);
+      showDashboard();
+    } else {
+      document.getElementById('err-msg').classList.remove('hidden');
+      document.getElementById('pwd-input').value = '';
+    }
+  } catch(e) {
+    document.getElementById('err-msg').textContent = '⚠ Erreur de connexion — API non disponible';
+    document.getElementById('err-msg').classList.remove('hidden');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Connexion →';
+}
+
+document.getElementById('pwd-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// Check session
+window.addEventListener('load', () => {
+  const t = sessionStorage.getItem('admin_token');
+  if (t) { adminToken = t; showDashboard(); }
+});
+
+function logout() {
+  sessionStorage.removeItem('admin_token');
+  adminToken = null;
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pwd-input').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════
+async function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  await loadData();
+}
+
+async function loadData() {
+  try {
+    const [usersResp, histResp] = await Promise.all([
+      fetch('/api/admin-data', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: 'getUsers', token: adminToken})
+      }),
+      fetch('/api/admin-data', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: 'getHistory', token: adminToken})
+      })
+    ]);
+
+    if (usersResp.status === 401 || histResp.status === 401) {
+      logout();
+      return;
+    }
+
+    const usersData = await usersResp.json();
+    const histData = await histResp.json();
+
+    allUsers = usersData.users || [];
+    allHistory = histData.history || [];
+
+    renderStats();
+    renderUserList();
+    if (allUsers.length) selectUser(allUsers[0]);
+
+  } catch(e) {
+    toast('⚠ Erreur de chargement');
+  }
+}
+
+function refresh() { loadData(); toast('🔄 Actualisation…'); }
+
+// ═══════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════
+function renderStats() {
+  const today = new Date().toDateString();
+  const todayCount = allUsers.filter(u => new Date(u.updated_at).toDateString() === today).length;
+
+  const avgPct = allUsers.length
+    ? Math.round(allUsers.reduce((a, u) => {
+        const filled = Object.values(u.answers||{}).filter(v=>v&&v!=='unknown').length;
+        return a + (filled / TOTAL * 100);
+      }, 0) / allUsers.length)
+    : 0;
+
+  document.getElementById('st-total').textContent = allUsers.length;
+  document.getElementById('st-today').textContent = todayCount;
+  document.getElementById('st-avg').textContent = avgPct + '%';
+  document.getElementById('st-hist').textContent = allHistory.length;
+}
+
+// ═══════════════════════════════════════════════════
+//  USER LIST
+// ═══════════════════════════════════════════════════
+function filterUsers() {
+  const q = document.getElementById('user-search').value.toLowerCase();
+  const filtered = allUsers.filter(u =>
+    u.username.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q)
+  );
+  renderUserList(filtered);
+}
+
+function renderUserList(users) {
+  const list = users || allUsers;
+  document.getElementById('user-count').textContent = list.length + ' profil' + (list.length>1?'s':'');
+
+  if (!list.length) {
+    document.getElementById('user-list').innerHTML = '<div class="empty">Aucun profil trouvé.</div>';
+    return;
+  }
+
+  document.getElementById('user-list').innerHTML = list.map((u, i) => {
+    const filled = Object.values(u.answers||{}).filter(v=>v&&v!=='unknown').length;
+    const pct = Math.round(filled / TOTAL * 100);
+    const isActive = selectedUser && selectedUser.username === u.username;
+    return `<button class="user-btn${isActive?' active':''}" onclick="selectUser(allUsers.find(x=>x.username==='${esc(u.username)}'))">
+      <div>
+        <div class="u-name">${esc(u.username)}</div>
+        <div class="u-meta">${u.email||'Pas d\'email'} · ${fmtDate(u.updated_at)}</div>
+      </div>
+      <div class="u-pct">${pct}%</div>
+    </button>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  USER DETAIL
+// ═══════════════════════════════════════════════════
+function selectUser(u) {
+  selectedUser = u;
+  // Update active state in list
+  document.querySelectorAll('.user-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.querySelector('.u-name')?.textContent === u.username);
+  });
+
+  const ans = u.answers || {};
+  const filled = Object.values(ans).filter(v=>v&&v!=='unknown').length;
+  const pct = Math.round(filled / TOTAL * 100);
+
+  document.getElementById('detail-empty').classList.add('hidden');
+  document.getElementById('detail-content').classList.remove('hidden');
+  document.getElementById('d-name').textContent = u.username;
+  document.getElementById('d-email').textContent = u.email || '—';
+  document.getElementById('d-pct').textContent = pct + '%';
+  document.getElementById('d-date').textContent = fmtDate(u.updated_at);
+
+  renderAnswers(u);
+  renderUserHistory(u);
+}
+
+function switchDetailTab(tab) {
+  currentDetailTab = tab;
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('pane-' + tab).classList.add('active');
+}
+
+function renderAnswers(u) {
+  const ans = u.answers || {};
+  let html = '';
+
+  for (const [catName, catData] of Object.entries(DATA)) {
+    const items = catData.mode === 'dual'
+      ? catData.items.flatMap(item => [
+          {key: item + '_give', label: item, side: 'Donner'},
+          {key: item + '_receive', label: item, side: 'Recevoir'}
+        ])
+      : catData.items.map(item => ({key: item, label: item, side: null}));
+
+    const answered = items.filter(it => ans[it.key] && ans[it.key] !== 'unknown');
+    const pct = Math.round(answered.length / items.length * 100);
+
+    html += `<div class="cat-section">
+      <div class="cat-hd" onclick="toggleCat(this)">
+        <span class="cat-title">${esc(catName)}</span>
+        <div class="cat-meta">
+          <div class="cat-pct-bar"><div class="cat-pct-fill" style="width:${pct}%"></div></div>
+          <span class="cat-pct-txt">${answered.length}/${items.length}</span>
+          <span class="cat-chevron">▾</span>
+        </div>
+      </div>
+      <div class="cat-body">
+        ${items.map(it => {
+          const val = ans[it.key] || 'unknown';
+          const opt = OPTIONS.find(o => o.key === val) || OPTIONS[OPTIONS.length-1];
+          const isUnknown = val === 'unknown';
+          return `<div class="ans-row${isUnknown?' unknown':''}">
+            <span class="ans-name">${esc(it.label)}</span>
+            ${it.side ? `<span class="ans-side">${it.side}</span>` : ''}
+            <span class="ans-badge" style="background:${opt.color};color:${darkText(val)?'white':'#1a1a2e'}">${opt.label}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('answers-content').innerHTML = html;
+}
+
+function toggleCat(hd) {
+  hd.classList.toggle('open');
+  hd.nextElementSibling.classList.toggle('open');
+}
+
+function renderUserHistory(u) {
+  const hist = allHistory.filter(h => h.username === u.username);
+  if (!hist.length) {
+    document.getElementById('history-content').innerHTML = '<div class="empty">Aucun historique pour cet utilisateur.</div>';
+    return;
+  }
+  document.getElementById('history-content').innerHTML = hist.slice(0, 150).map(h => {
+    const fr = OPTIONS.find(o => o.key === h.from_val) || OPTIONS[OPTIONS.length-1];
+    const to = OPTIONS.find(o => o.key === h.to_val) || OPTIONS[OPTIONS.length-1];
+    return `<div class="hist-item">
+      <div class="hist-top">
+        <span>${esc(h.item)}${h.side?' · '+h.side:''}</span>
+        <span class="hist-date">${fmtDate(h.created_at)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;margin-top:5px">
+        <span class="hist-pill" style="background:${fr.color};color:${darkText(h.from_val)?'white':'#1a1a2e'}">${fr.label}</span>
+        <span style="color:var(--muted)">→</span>
+        <span class="hist-pill" style="background:${to.color};color:${darkText(h.to_val)?'white':'#1a1a2e'}">${to.label}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  EXPORT CSV
+// ═══════════════════════════════════════════════════
+function exportUser() {
+  if (!selectedUser) return;
+  const u = selectedUser;
+  const ans = u.answers || {};
+  let csv = 'Pseudo,Email,Catégorie,Pratique,Côté,Réponse\n';
+
+  for (const [catName, catData] of Object.entries(DATA)) {
+    const items = catData.mode === 'dual'
+      ? catData.items.flatMap(item => [
+          {key: item + '_give', label: item, side: 'Donner'},
+          {key: item + '_receive', label: item, side: 'Recevoir'}
+        ])
+      : catData.items.map(item => ({key: item, label: item, side: ''}));
+
+    for (const it of items) {
+      const val = ans[it.key] || 'unknown';
+      const opt = OPTIONS.find(o => o.key === val) || OPTIONS[OPTIONS.length-1];
+      csv += `"${u.username}","${u.email||''}","${catName}","${it.label}","${it.side||''}","${opt.label}"\n`;
+    }
+  }
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `kinklist-${u.username}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  toast('✓ CSV exporté');
+}
+
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+function esc(s) {
+  return String(s).replace(/['"&<>]/g, c => ({"'":"&#39;",'"':"&quot;","&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+}
+function fmtDate(d) {
+  try { return new Date(d).toLocaleString('fr-FR'); } catch { return d; }
+}
+function darkText(v) { return v==='no'||v==='absolute'||v==='love'; }
+</script>
+</body>
+</html>
