@@ -249,6 +249,39 @@
     .poster-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-size:var(--poster-font,13px)}
     .poster-item:last-child{border-bottom:0}.poster-name{line-height:1.25}.poster-chip{border-radius:99px;padding:3px 8px;font-size:calc(var(--poster-font,13px) - 2px);font-weight:700;white-space:nowrap}.poster-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:22px;color:var(--muted);font-size:11px}.poster-legend span{display:inline-flex;align-items:center;gap:4px}.poster-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
 
+    /* ── MOBILE ACTIONS PLUS FLUIDES ── */
+    @media(max-width:700px){
+      .topbar-actions{
+        width:100%;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:8px;
+      }
+      .topbar-actions .pill{
+        grid-column:1 / -1;
+        width:100%;
+        text-align:center;
+        padding:6px 10px;
+        font-size:0.74rem;
+      }
+      .topbar-actions .btn{
+        width:100%;
+        min-width:0;
+        font-size:0.76rem;
+        padding:9px 7px;
+        border-radius:10px;
+      }
+      .studio-modal{
+        padding:20px;
+      }
+      .modal-btns{
+        flex-direction:column;
+      }
+      .modal-btns .btn{
+        width:100%;
+      }
+    }
+
     ::-webkit-scrollbar{width:5px;height:5px}
     ::-webkit-scrollbar-track{background:var(--surface)}
     ::-webkit-scrollbar-thumb{background:var(--faint);border-radius:3px}
@@ -285,7 +318,7 @@
       <div class="topbar-actions">
         <div class="pill" id="prog-pill">Répondu : <strong id="pc">0</strong>/<strong id="pt">0</strong> (<strong id="pp">0</strong>%)</div>
         <button class="btn btn-sm btn-ghost" onclick="openDesignStudio()">👁 Voir mes réponses</button>
-        <button class="btn btn-sm btn-ghost" onclick="downloadImage()">📸 Télécharger mes réponses</button>
+        <button class="btn btn-sm btn-ghost" onclick="shareImage()">📤 Partager mes réponses</button>
       </div>
     </div>
   </div>
@@ -434,7 +467,7 @@
           <option value="positive">Seulement positif / peut-être</option>
         </select>
         <div class="modal-btns">
-          <button class="btn" onclick="downloadDesignedImage()">📸 Télécharger cette image</button>
+          <button class="btn" onclick="shareDesignedImage()">📤 Partager cette image</button>
           <button class="btn btn-ghost" onclick="document.getElementById('modal-studio').classList.add('hidden')">Fermer</button>
         </div>
       </div>
@@ -983,21 +1016,78 @@ async function canvasToDownload(canvas, filename){
   });
 }
 async function downloadDesignedImage(){
+  // Ancien nom conservé pour compatibilité : maintenant ça partage sur mobile, télécharge sur PC.
+  await shareDesignedImage();
+}
+async function shareDesignedImage(){
   toast("⏳ Génération de l'image…");
   renderPosterPreview();
   await new Promise(r=>setTimeout(r,150));
+
   try{
     const el=document.getElementById('poster-preview');
-    const canvas=await html2canvas(el,{backgroundColor:'#17171f',scale:2,useCORS:true,logging:false,windowWidth:el.scrollWidth,windowHeight:el.scrollHeight});
-    const ok=await canvasToDownload(canvas,`kinklist-${(username||'profil').replace(/\s+/g,'-')}-${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.jpg`);
-    toast(ok?'✓ Image téléchargée !':'⚠ Téléchargement bloqué par le navigateur');
-  }catch(e){toast('⚠ Erreur génération image');console.error(e);}
+    const canvas=await html2canvas(el,{
+      backgroundColor:'#17171f',
+      scale:2,
+      useCORS:true,
+      logging:false,
+      windowWidth:el.scrollWidth,
+      windowHeight:el.scrollHeight
+    });
+
+    canvas.toBlob(async(blob)=>{
+      if(!blob){toast('⚠ Erreur génération image');return;}
+
+      const cleanName=(username||'profil').replace(/\s+/g,'-');
+      const filename=`kinklist-${cleanName}-${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.jpg`;
+      const file=new File([blob],filename,{type:'image/jpeg'});
+
+      // iPhone / Android : ouvre le vrai menu de partage natif.
+      // Là, l'utilisateur peut choisir “Enregistrer dans Photos”, AirDrop, WhatsApp, Messages, etc.
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({
+            title:'KinkList',
+            text:'Mes réponses KinkList',
+            files:[file]
+          });
+          toast('✓ Image prête à enregistrer');
+          return;
+        }catch(err){
+          // Si la personne ferme le menu de partage, on ne force pas un téléchargement bizarre.
+          if(err && err.name==='AbortError'){
+            toast('Partage annulé');
+            return;
+          }
+        }
+      }
+
+      // Fallback PC ou navigateur incompatible : téléchargement classique.
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=url;
+      link.download=filename;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(()=>{URL.revokeObjectURL(url);link.remove();},500);
+      toast('✓ Image téléchargée');
+
+    },'image/jpeg',0.95);
+  }catch(e){
+    toast('⚠ Erreur génération image');
+    console.error(e);
+  }
+}
+async function shareImage(){
+  // Bouton principal : ouvre le studio si besoin, puis partage l'image proprement.
+  if(document.getElementById('modal-studio').classList.contains('hidden')) openDesignStudio();
+  await shareDesignedImage();
 }
 async function downloadImage(){
-  // Téléchargement direct : utilise le studio en mode par défaut, au lieu de capturer la page complète.
-  if(document.getElementById('modal-studio').classList.contains('hidden')) openDesignStudio();
-  await downloadDesignedImage();
+  // Ancien nom conservé pour éviter de casser d'anciens boutons/cache.
+  await shareImage();
 }
+
 // ═══════════════════════════════════════════════════
 //  ADMIN
 // ═══════════════════════════════════════════════════
