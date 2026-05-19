@@ -410,12 +410,12 @@ const DATA = {
   'Préférences physiques':{mode:'single',items:['Plutôt maigre','Plutôt en chair','Petits seins','Gros seins','Petit pénis','Gros pénis','Avec poils','Totalement épilé','Pénis long','Pénis large','Fesses rondes','Taille fine']},
   'Habillement':{mode:'single',items:['Sexe habillé','Totalement nu','Caleçon','String','Lingerie sexy','Filet','Bas & Jarretelles','Talons hauts','Cuir','Latex','Vinyle','Wet look','Robes libertines','Uniforme & cosplay','Travestissement']},
   'Préférences sexuelles':{mode:'single',items:['Vous et un homme','Vous et une femme','Vous et un homme transgenre','Vous et une femme transgenre','Vous, un homme et une femme','Vous et deux hommes','Vous et deux femmes','Activité à quatre','Orgie','Expérience avec un autre couple','Moments avec plusieurs partenaires','Se laisser tenter par une expérience à trois']},
-  'Pratiques sexuelles':{mode:'dual',items:['Caresses corporelles','French kiss','Teasing','Stimulation des tétons','Masturbation','Fellation','Pénétration vaginale','Stimulation des bourses','Gorge profonde','Cunnilingus','Edger','JOI Masturbation guidée','Slow sex','Sexe Intense','Massages','Tantra','Tribadisme','Regarder pendant l\'acte','Être observé(e)','Pénétration profonde','Double stimulation']},
+  'Pratiques sexuelles':{mode:'dual',items:['Caresses corporelles','French kiss','Teasing','Stimulation des tétons','Masturbation','Fellation','Pénétration vaginale','Stimulation des bourses','Gorge profonde','Cunnilingus','Edger','JOI Masturbation guidée','Slow sex','Sexe Intense','Massages','Tantra','Tribadisme','Regarder pendant l’acte','Être observé(e)','Pénétration profonde','Double stimulation']},
   'Pratiques anales':{mode:'dual',items:['Pénétration anale','Sextoys','Sodomie (par un homme)','Chevillage (Pegging)','Anulingus','Double pénétration','Fisting','Massage de la prostate','Dilatation anale']},
   'Sextoys':{mode:'dual',items:['Godemichet','Vibromasseur','Plug anal','Oeuf Vibrant','Stimulateur clitoridien','Masseur prostatique','Cockring','Gaine pénienne','Sextoy connecté','Gode ceinture','Masturbateur','Finition réaliste','Taille imposante']},
-  'Bondage & restrictions':{mode:'dual',items:['Collier','Laisse','Bandeau','Menottes légère','Menottes en métal','Bondage léger','Bondage lourd','Cordes (Kinbaku)','Armbinders','Harnais','Camisole de force','Barres d\'écartement','Bâillon','Cagoule intégrale']},
+  'Bondage & restrictions':{mode:'dual',items:['Collier','Laisse','Bandeau','Menottes légère','Menottes en métal','Bondage léger','Bondage lourd','Cordes (Kinbaku)','Armbinders','Harnais','Camisole de force','Barres d’écartement','Bâillon','Cagoule intégrale']},
   'Bondage & pratiques':{mode:'dual',items:['Mains attachées (dos)','Mains attachées (devant)','Pieds attachés','Attaché(e) sur lit','Attaché(e) sur banc de fessée','Attaché(e) sur chaise','Suspension','Croix de St. André','Pilori','Momification','Enfermement','Vacbed','Film alimentaire','Dormir attachée','Tenue en laisse']},
-  'Domination & soumission':{mode:'dual',items:['Domination','Soumission','Servitude domestique','Esclavage sexuel','Regression (Age Play)','Discipline','Contrôle des orgasmes','Déni d\'orgasme','Traite de sperme','Echange de pouvoir','Bijoux symboliques','Masturbation forcée','Orgasmes forcés','Être partagé(e)','Jeu de partage','Être dominé(e) par plusieurs','Participer au contrôle']},
+  'Domination & soumission':{mode:'dual',items:['Domination','Soumission','Servitude domestique','Esclavage sexuel','Regression (Age Play)','Discipline','Contrôle des orgasmes','Déni d’orgasme','Traite de sperme','Echange de pouvoir','Bijoux symboliques','Masturbation forcée','Orgasmes forcés','Être partagé(e)','Jeu de partage','Être dominé(e) par plusieurs','Participer au contrôle']},
   'Hypnose Érotique':{mode:'dual',items:['Hypnose légère','Hypnose profonde','Orgasmes hypnotiques','Implantation de triggers','Soumission','Devotion','Conditionnement','Dronification','Chasteté','Masturbation & JOI']},
   'Non-consentement consenti':{mode:'dual',items:['Simulation de viol','Coercition','Kidnapping','Alcool','Drogues & Somnifères','Sexe pendant le sommeil','Orgasmes forcés']},
   'Fantasmes surréalistes':{mode:'dual',items:['Futanari','Furry','Gigantisme','Transformation','Tentacules','Monstres & Aliens']},
@@ -498,7 +498,7 @@ document.getElementById('in-pseudo').addEventListener('keydown',e=>{if(e.key==='
 async function startApp(){
   username=(document.getElementById('in-pseudo').value||'').trim();
   userEmail=(document.getElementById('in-email').value||'').trim();
-  if(!username){ toast('⚠ Entre ton pseudo d'abord'); return; }
+  if(!username){ toast("⚠ Entre ton prénom ou pseudo !"); return; }
 
   // Toujours essayer de charger depuis localStorage d'abord
   try{const s=localStorage.getItem('kl_'+username);if(s)answers=JSON.parse(s);}catch(e){}
@@ -732,7 +732,7 @@ function renderCompare(name1,ans1,name2,ans2){
         </div>`;
       }).join('')}
     </div>
-  `).join('')||'<div class="no-match-msg">Aucun match trouvé pour l\'instant. Remplissez plus de réponses !</div>';
+  `).join('')||'<div class="no-match-msg">Aucun match trouvé pour l’instant. Remplissez plus de réponses !</div>';
 
   document.getElementById('compare-results').classList.remove('hidden');
 }
@@ -762,7 +762,7 @@ async function sendPdfEmail(){
   lines.push(`Date : ${new Date().toLocaleDateString('fr-FR')}`);
   lines.push(`Réponses : ${nonEmpty.length}`);
   lines.push('');
-  lines.push('LÉGENDE : 💜 Kink absolu | 💚 J\'aime bien | 🟡 Ok | 🟠 Peut-être | 🔴 Non');
+  lines.push('LÉGENDE : 💜 Kink absolu | 💚 J’aime bien | 🟡 Ok | 🟠 Peut-être | 🔴 Non');
   lines.push('');
 
   const emojiMap={absolute:'💜',love:'💚',ok:'🟡',maybe:'🟠',no:'🔴',unknown:'⬜'};
@@ -842,7 +842,7 @@ async function sendPdfEmail(){
 //  TÉLÉCHARGER IMAGE JPEG
 // ═══════════════════════════════════════════════════
 async function downloadImage(){
-  toast('⏳ Génération de l'image…');
+  toast("⏳ Génération de l'image…");
   // Render the current list pane
   goTab('list');
   await new Promise(r=>setTimeout(r,200));
@@ -903,7 +903,7 @@ function renderUserList(){
     return `<button class="user-btn${i===0&&!selAdminUser?' active':''}" onclick="selUser(${i})">
       <div>
         <div class="u-name">${esc(u.username)}</div>
-        <div class="u-meta">${u.email||'Pas d\'email'} · ${fmtDate(u.updated_at)}</div>
+        <div class="u-meta">${u.email||'Pas d’email'} · ${fmtDate(u.updated_at)}</div>
       </div>
       <div class="badge">${pct}%</div>
     </button>`;
