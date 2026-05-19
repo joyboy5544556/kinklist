@@ -235,12 +235,12 @@
     <p class="splash-sub">Explore et partage tes préférences avec ton partenaire. Tes données restent privées.</p>
 
     <label class="field-label" for="in-pseudo">Ton pseudo (visible par toi seul)</label>
-    <input class="input" id="in-pseudo" placeholder="Ex : Luna, Mystère…" autocomplete="off" oninput="document.getElementById('btn-start').disabled=!this.value.trim()"/>
+    <input class="input" id="in-pseudo" placeholder="Ex : Luna, Mystère…" autocomplete="off"/>
 
     <label class="field-label" for="in-email">Ton email <span style="color:var(--faint)">(optionnel)</span></label>
     <input class="input" id="in-email" placeholder="toi@exemple.com" autocomplete="off"/>
 
-    <button class="btn btn-full" id="btn-start" disabled onclick="startApp()">Commencer mon profil →</button>
+    <button class="btn btn-full" id="btn-start" onclick="startApp()">Commencer mon profil →</button>
 
 
   </div>
@@ -496,9 +496,9 @@ document.getElementById('in-pseudo').addEventListener('keydown',e=>{if(e.key==='
 //  START APP
 // ═══════════════════════════════════════════════════
 async function startApp(){
-  username=document.getElementById('in-pseudo').value.trim();
-  userEmail=document.getElementById('in-email').value.trim();
-  if(!username)return;
+  username=(document.getElementById('in-pseudo').value||'').trim();
+  userEmail=(document.getElementById('in-email').value||'').trim();
+  if(!username){ toast('⚠ Entre ton pseudo d'abord'); return; }
 
   // Toujours essayer de charger depuis localStorage d'abord
   try{const s=localStorage.getItem('kl_'+username);if(s)answers=JSON.parse(s);}catch(e){}
