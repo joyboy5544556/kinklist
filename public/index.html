@@ -438,9 +438,11 @@ let compareToken=null, pendingCompareToken=null;
 // ═══════════════════════════════════════════════════
 const sbH=()=>({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'});
 async function sbGet(t,q=''){
-  const r=await fetch(`${SB_URL}/rest/v1/${t}${q}`,{headers:sbH()});
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${t}${q}`,{headers:sbH()});
+    if(!r.ok){ console.warn('sbGet error',r.status,await r.text()); return null; }
+    return r.json();
+  }catch(e){ console.warn('sbGet fetch fail',e); return null; }
 }
 async function sbUpsert(t,body){
   const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...sbH(),'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(body)});
@@ -498,21 +500,18 @@ async function startApp(){
   userEmail=document.getElementById('in-email').value.trim();
   if(!username)return;
 
+  // Toujours essayer de charger depuis localStorage d'abord
+  try{const s=localStorage.getItem('kl_'+username);if(s)answers=JSON.parse(s);}catch(e){}
+
   if(sbReady()){
-    try{
-      const rows=await sbGet('kinklist',`?username=eq.${enc(username)}&select=answers,email,compare_token`);
-      if(rows&&rows[0]){
-        answers=rows[0].answers||{};
-        if(!userEmail&&rows[0].email) userEmail=rows[0].email;
-        compareToken=rows[0].compare_token||null;
-      }
-    }catch(e){console.warn('load err',e);}
-    try{
-      const hist=await sbGet('kink_history',`?username=eq.${enc(username)}&order=created_at.desc&limit=100`);
-      if(hist) history=hist.map(h=>({user:h.username,item:h.item,side:h.side,from:h.from_val,to:h.to_val,date:fmtDate(h.created_at)}));
-    }catch(e){}
-  } else {
-    try{const s=localStorage.getItem('kl_'+username);if(s)answers=JSON.parse(s);}catch(e){}
+    const rows=await sbGet('kinklist',`?username=eq.${enc(username)}&select=answers,email,compare_token`);
+    if(rows&&rows[0]){
+      answers=rows[0].answers||{};
+      if(!userEmail&&rows[0].email) userEmail=rows[0].email;
+      compareToken=rows[0].compare_token||null;
+    }
+    const hist=await sbGet('kink_history',`?username=eq.${enc(username)}&order=created_at.desc&limit=100`);
+    if(hist) history=hist.map(h=>({user:h.username,item:h.item,side:h.side,from:h.from_val,to:h.to_val,date:fmtDate(h.created_at)}));
   }
 
   document.getElementById('splash').style.display='none';
