@@ -249,6 +249,14 @@
     .poster-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-size:var(--poster-font,13px)}
     .poster-item:last-child{border-bottom:0}.poster-name{line-height:1.25}.poster-chip{border-radius:99px;padding:3px 8px;font-size:calc(var(--poster-font,13px) - 2px);font-weight:700;white-space:nowrap}.poster-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:22px;color:var(--muted);font-size:11px}.poster-legend span{display:inline-flex;align-items:center;gap:4px}.poster-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
 
+
+    .share-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+    .share-choice-btn{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:18px 12px;color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;text-align:center}
+    .share-choice-btn:hover{border-color:var(--accent);background:var(--accentglow);transform:translateY(-1px)}
+    .share-choice-ico{font-size:1.8rem;display:block;margin-bottom:8px}
+    .share-choice-title{font-weight:700;font-size:.92rem;display:block}
+    .share-choice-sub{color:var(--muted);font-size:.75rem;display:block;margin-top:4px;line-height:1.35}
+
     /* ── MOBILE ACTIONS PLUS FLUIDES ── */
     @media(max-width:700px){
       .topbar-actions{
@@ -279,6 +287,9 @@
       }
       .modal-btns .btn{
         width:100%;
+      }
+      .share-choice-grid{
+        grid-template-columns:1fr;
       }
     }
 
@@ -318,7 +329,7 @@
       <div class="topbar-actions">
         <div class="pill" id="prog-pill">Répondu : <strong id="pc">0</strong>/<strong id="pt">0</strong> (<strong id="pp">0</strong>%)</div>
         <button class="btn btn-sm btn-ghost" onclick="openDesignStudio()">👁 Voir mes réponses</button>
-        <button class="btn btn-sm btn-ghost" onclick="shareImage()">📤 Partager mes réponses</button>
+        <button class="btn btn-sm btn-ghost" onclick="openShareChoice()">📤 Envoyer mes réponses</button>
       </div>
     </div>
   </div>
@@ -445,6 +456,29 @@
   </div>
 </div>
 
+<!-- ══ SHARE CHOICE ══ -->
+<div id="modal-share-choice" class="modal-bg hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal">
+    <h2>Envoyer mes réponses</h2>
+    <p class="sub">Choisis le format. Sur iPhone/Android, ça ouvre le menu de partage avec WhatsApp, Gmail, Messages, AirDrop, etc.</p>
+    <div class="share-choice-grid">
+      <button class="share-choice-btn" onclick="shareChoice('image')">
+        <span class="share-choice-ico">🖼️</span>
+        <span class="share-choice-title">Photo JPEG</span>
+        <span class="share-choice-sub">Idéal WhatsApp, galerie, Instagram</span>
+      </button>
+      <button class="share-choice-btn" onclick="shareChoice('pdf')">
+        <span class="share-choice-ico">📄</span>
+        <span class="share-choice-title">PDF</span>
+        <span class="share-choice-sub">Idéal Gmail, impression, document propre</span>
+      </button>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-share-choice').classList.add('hidden')">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ DESIGN STUDIO IMAGE ══ -->
 <div id="modal-studio" class="modal-bg hidden" onclick="if(event.target===this)this.classList.add('hidden')">
   <div class="modal studio-modal">
@@ -467,7 +501,8 @@
           <option value="positive">Seulement positif / peut-être</option>
         </select>
         <div class="modal-btns">
-          <button class="btn" onclick="shareDesignedImage()">📤 Partager cette image</button>
+          <button class="btn" onclick="shareDesignedImage()">📤 Envoyer en photo</button>
+          <button class="btn btn-ghost" onclick="shareDesignedPdf()">📄 Envoyer en PDF</button>
           <button class="btn btn-ghost" onclick="document.getElementById('modal-studio').classList.add('hidden')">Fermer</button>
         </div>
       </div>
@@ -1006,86 +1041,157 @@ async function canvasToDownload(canvas, filename){
   return new Promise((resolve)=>{
     canvas.toBlob(blob=>{
       if(!blob){resolve(false);return;}
-      const url=URL.createObjectURL(blob);
-      const link=document.createElement('a');
-      link.href=url; link.download=filename;
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(()=>{URL.revokeObjectURL(url);link.remove();resolve(true);},500);
+      downloadBlob(blob, filename);
+      resolve(true);
     },'image/jpeg',0.94);
   });
 }
+function cleanFileName(){
+  return (username||'profil').trim().replace(/[^a-z0-9\-]+/gi,'-').replace(/-+/g,'-').replace(/^-|-$/g,'') || 'profil';
+}
+function todayFilePart(){
+  return new Date().toLocaleDateString('fr-FR').replace(/\//g,'-');
+}
+function downloadBlob(blob, filename){
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=filename;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);link.remove();},700);
+}
+async function shareOrDownloadFile(file, title, text){
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({title,text,files:[file]});
+      toast('✓ Prêt à envoyer');
+      return true;
+    }catch(err){
+      if(err && err.name==='AbortError'){
+        toast('Partage annulé');
+        return false;
+      }
+      console.warn('share fail', err);
+    }
+  }
+  downloadBlob(file, file.name);
+  toast('✓ Fichier téléchargé');
+  return true;
+}
+function openShareChoice(){
+  document.getElementById('modal-share-choice').classList.remove('hidden');
+}
+async function shareChoice(type){
+  document.getElementById('modal-share-choice').classList.add('hidden');
+  if(type==='pdf') await shareDesignedPdf();
+  else await shareImage();
+}
+async function buildPosterImageFile(){
+  renderPosterPreview();
+  await new Promise(r=>setTimeout(r,180));
+  const el=document.getElementById('poster-preview');
+  const canvas=await html2canvas(el,{
+    backgroundColor:'#17171f',
+    scale:2,
+    useCORS:true,
+    logging:false,
+    windowWidth:el.scrollWidth,
+    windowHeight:el.scrollHeight
+  });
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.95));
+  if(!blob) throw new Error('Image blob impossible');
+  return new File([blob],`kinklist-${cleanFileName()}-${todayFilePart()}.jpg`,{type:'image/jpeg'});
+}
+async function buildPdfFile(){
+  const { jsPDF } = window.jspdf;
+  const pdf=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
+  const pageW=210, pageH=297, margin=12;
+  let y=16;
+  const filled=Object.values(answers).filter(v=>v&&v!=='unknown').length;
+  const total=Object.values(DATA).reduce((a,c)=>a+(c.mode==='dual'?c.items.length*2:c.items.length),0);
+
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(18);
+  pdf.text(`KinkList de ${username||'Moi'}`, margin, y);
+  y+=8;
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(10);
+  pdf.text(`${filled}/${total} réponses · ${new Date().toLocaleDateString('fr-FR')}`, margin, y);
+  y+=8;
+
+  const legend='Légende : Kink absolu / J’aime bien / Ok / Peut-être / Non';
+  pdf.setTextColor(90);
+  pdf.text(legend, margin, y);
+  pdf.setTextColor(0);
+  y+=8;
+
+  function ensureSpace(h=8){
+    if(y+h>pageH-margin){pdf.addPage();y=16;}
+  }
+  Object.entries(DATA).forEach(([cat,cfg])=>{
+    const rows=[];
+    cfg.items.forEach(item=>{
+      if(cfg.mode==='single'){
+        const v=answers[item]||'unknown';
+        if(v!=='unknown') rows.push([item, optionLabel(v)]);
+      }else{
+        const gv=answers[item+'_give']||'unknown';
+        const rv=answers[item+'_receive']||'unknown';
+        if(gv!=='unknown') rows.push([item+' · Donner', optionLabel(gv)]);
+        if(rv!=='unknown') rows.push([item+' · Recevoir', optionLabel(rv)]);
+      }
+    });
+    if(!rows.length) return;
+    ensureSpace(13);
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(12);
+    pdf.text(cat, margin, y);
+    y+=6;
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(9);
+    rows.forEach(([name,val])=>{
+      const txt=`• ${name} : ${val}`;
+      const lines=pdf.splitTextToSize(txt, pageW-margin*2);
+      ensureSpace(lines.length*5+1);
+      pdf.text(lines, margin, y);
+      y+=lines.length*5;
+    });
+    y+=3;
+  });
+
+  const blob=pdf.output('blob');
+  return new File([blob],`kinklist-${cleanFileName()}-${todayFilePart()}.pdf`,{type:'application/pdf'});
+}
 async function downloadDesignedImage(){
-  // Ancien nom conservé pour compatibilité : maintenant ça partage sur mobile, télécharge sur PC.
   await shareDesignedImage();
 }
 async function shareDesignedImage(){
-  toast("⏳ Génération de l'image…");
-  renderPosterPreview();
-  await new Promise(r=>setTimeout(r,150));
-
+  toast("⏳ Génération de la photo…");
   try{
-    const el=document.getElementById('poster-preview');
-    const canvas=await html2canvas(el,{
-      backgroundColor:'#17171f',
-      scale:2,
-      useCORS:true,
-      logging:false,
-      windowWidth:el.scrollWidth,
-      windowHeight:el.scrollHeight
-    });
-
-    canvas.toBlob(async(blob)=>{
-      if(!blob){toast('⚠ Erreur génération image');return;}
-
-      const cleanName=(username||'profil').replace(/\s+/g,'-');
-      const filename=`kinklist-${cleanName}-${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.jpg`;
-      const file=new File([blob],filename,{type:'image/jpeg'});
-
-      // iPhone / Android : ouvre le vrai menu de partage natif.
-      // Là, l'utilisateur peut choisir “Enregistrer dans Photos”, AirDrop, WhatsApp, Messages, etc.
-      if(navigator.canShare && navigator.canShare({files:[file]})){
-        try{
-          await navigator.share({
-            title:'KinkList',
-            text:'Mes réponses KinkList',
-            files:[file]
-          });
-          toast('✓ Image prête à enregistrer');
-          return;
-        }catch(err){
-          // Si la personne ferme le menu de partage, on ne force pas un téléchargement bizarre.
-          if(err && err.name==='AbortError'){
-            toast('Partage annulé');
-            return;
-          }
-        }
-      }
-
-      // Fallback PC ou navigateur incompatible : téléchargement classique.
-      const url=URL.createObjectURL(blob);
-      const link=document.createElement('a');
-      link.href=url;
-      link.download=filename;
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(()=>{URL.revokeObjectURL(url);link.remove();},500);
-      toast('✓ Image téléchargée');
-
-    },'image/jpeg',0.95);
+    const file=await buildPosterImageFile();
+    await shareOrDownloadFile(file,'KinkList','Mes réponses KinkList en photo JPEG');
   }catch(e){
-    toast('⚠ Erreur génération image');
+    toast('⚠ Erreur génération photo');
+    console.error(e);
+  }
+}
+async function shareDesignedPdf(){
+  toast("⏳ Génération du PDF…");
+  try{
+    const file=await buildPdfFile();
+    await shareOrDownloadFile(file,'KinkList','Mes réponses KinkList en PDF');
+  }catch(e){
+    toast('⚠ Erreur génération PDF');
     console.error(e);
   }
 }
 async function shareImage(){
-  // Bouton principal : ouvre le studio si besoin, puis partage l'image proprement.
   if(document.getElementById('modal-studio').classList.contains('hidden')) openDesignStudio();
   await shareDesignedImage();
 }
 async function downloadImage(){
-  // Ancien nom conservé pour éviter de casser d'anciens boutons/cache.
-  await shareImage();
+  openShareChoice();
 }
 
 // ═══════════════════════════════════════════════════
