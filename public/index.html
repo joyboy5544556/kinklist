@@ -218,9 +218,37 @@
     .item-chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;
       padding:0;line-height:1}
     .item-chip button:hover{color:#f87171}
+
+    .move-btn{background:var(--surface3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:0.78rem}
+    .move-btn:hover{border-color:var(--accent);background:var(--accentglow)}
+    .drag-handle{cursor:grab;color:var(--muted);font-size:1rem;user-select:none;padding:4px 6px;border-radius:8px;background:var(--surface3)}
+    .dragging{opacity:.45;outline:1px dashed var(--accent)}
+    .cat-order-num{font-size:0.72rem;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:2px 8px;background:var(--surface)}
     .add-item-row{display:flex;gap:6px;margin-top:6px}
     .add-item-row .input{margin:0;flex:1;font-size:0.82rem;padding:7px 10px}
     .editor-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+
+
+    /* ── IMAGE DESIGN STUDIO ── */
+    .studio-modal{max-width:1100px}
+    .studio-grid{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
+    @media(max-width:860px){.studio-grid{grid-template-columns:1fr}}
+    .studio-panel{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:16px}
+    .studio-panel .input{margin-bottom:10px}
+    .range-row{margin-bottom:13px}
+    .range-row label{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:6px}
+    .range-row input{width:100%}
+    .poster-preview-wrap{background:#08080c;border:1px solid var(--border);border-radius:16px;padding:14px;max-height:70vh;overflow:auto}
+    .poster-canvas{background:linear-gradient(145deg,#17171f 0%,#0d0d12 100%);border-radius:24px;padding:34px;color:var(--text);width:760px;min-height:500px}
+    .poster-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:18px}
+    .poster-title{font-family:'DM Serif Display',serif;font-size:38px;line-height:1}.poster-sub{color:var(--muted);font-size:13px;margin-top:7px}
+    .poster-progress{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 14px;text-align:right;font-size:12px;color:var(--muted)}
+    .poster-grid{display:grid;grid-template-columns:repeat(var(--poster-cols,2),1fr);gap:var(--poster-gap,14px)}
+    .poster-cat{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);border-radius:16px;overflow:hidden;break-inside:avoid}
+    .poster-cat-title{font-family:'DM Serif Display',serif;font-size:calc(var(--poster-font,13px) + 4px);padding:10px 13px;background:rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.1)}
+    .poster-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-size:var(--poster-font,13px)}
+    .poster-item:last-child{border-bottom:0}.poster-name{line-height:1.25}.poster-chip{border-radius:99px;padding:3px 8px;font-size:calc(var(--poster-font,13px) - 2px);font-weight:700;white-space:nowrap}.poster-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:22px;color:var(--muted);font-size:11px}.poster-legend span{display:inline-flex;align-items:center;gap:4px}.poster-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
     ::-webkit-scrollbar{width:5px;height:5px}
     ::-webkit-scrollbar-track{background:var(--surface)}
     ::-webkit-scrollbar-thumb{background:var(--faint);border-radius:3px}
@@ -256,8 +284,8 @@
       </div>
       <div class="topbar-actions">
         <div class="pill" id="prog-pill">Répondu : <strong id="pc">0</strong>/<strong id="pt">0</strong> (<strong id="pp">0</strong>%)</div>
-        <button class="btn btn-sm btn-ghost" onclick="downloadImage()">📸 Télécharger image</button>
-        <button class="btn btn-sm btn-ghost" onclick="saveAnswers()">💾 Sauvegarder</button>
+        <button class="btn btn-sm btn-ghost" onclick="openDesignStudio()">👁 Voir mes réponses</button>
+        <button class="btn btn-sm btn-ghost" onclick="downloadImage()">📸 Télécharger mes réponses</button>
       </div>
     </div>
   </div>
@@ -380,6 +408,37 @@
     <div class="modal-btns">
       <button class="btn" onclick="sendPdfEmail()">📧 Envoyer le PDF</button>
       <button class="btn btn-ghost" onclick="document.getElementById('modal-email').classList.add('hidden')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DESIGN STUDIO IMAGE ══ -->
+<div id="modal-studio" class="modal-bg hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal studio-modal">
+    <h2>Designer ton image</h2>
+    <p class="sub">Ajuste le rendu avant téléchargement : largeur, colonnes, taille du texte, espace, et titre. Ça télécharge une vraie image JPEG propre.</p>
+    <div class="studio-grid">
+      <div class="studio-panel">
+        <label class="field-label">Titre</label>
+        <input class="input" id="studio-title" oninput="renderPosterPreview()" placeholder="Mon défi / Mon menu…"/>
+        <label class="field-label">Sous-titre</label>
+        <input class="input" id="studio-sub" oninput="renderPosterPreview()" placeholder="Résumé de mes choix…"/>
+        <div class="range-row"><label><span>Largeur</span><b id="v-width">760</b></label><input id="studio-width" type="range" min="520" max="1200" value="760" oninput="renderPosterPreview()"></div>
+        <div class="range-row"><label><span>Colonnes</span><b id="v-cols">2</b></label><input id="studio-cols" type="range" min="1" max="4" value="2" oninput="renderPosterPreview()"></div>
+        <div class="range-row"><label><span>Taille texte</span><b id="v-font">13</b></label><input id="studio-font" type="range" min="10" max="20" value="13" oninput="renderPosterPreview()"></div>
+        <div class="range-row"><label><span>Espacement</span><b id="v-gap">14</b></label><input id="studio-gap" type="range" min="6" max="28" value="14" oninput="renderPosterPreview()"></div>
+        <label class="field-label">Afficher</label>
+        <select class="input" id="studio-filter" onchange="renderPosterPreview()">
+          <option value="filled">Seulement les choix remplis</option>
+          <option value="all">Tout le menu</option>
+          <option value="positive">Seulement positif / peut-être</option>
+        </select>
+        <div class="modal-btns">
+          <button class="btn" onclick="downloadDesignedImage()">📸 Télécharger cette image</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('modal-studio').classList.add('hidden')">Fermer</button>
+        </div>
+      </div>
+      <div class="poster-preview-wrap"><div id="poster-preview" class="poster-canvas"></div></div>
     </div>
   </div>
 </div>
@@ -627,8 +686,10 @@ function updateProg(){
 // ═══════════════════════════════════════════════════
 function goTab(name){
   ['list','compare','admin','guide'].forEach(t=>{
-    document.getElementById('tab-'+t).classList.toggle('active',t===name);
-    document.getElementById('pane-'+t).classList.toggle('active',t===name);
+    const tab=document.getElementById('tab-'+t);
+    const pane=document.getElementById('pane-'+t);
+    if(tab) tab.classList.toggle('active',t===name);
+    if(pane) pane.classList.toggle('active',t===name);
   });
   if(name==='compare') initComparePan();
   if(name==='admin'&&adminLoggedIn) loadAdminData();
@@ -839,30 +900,103 @@ async function sendPdfEmail(){
 
 
 // ═══════════════════════════════════════════════════
-//  TÉLÉCHARGER IMAGE JPEG
+//  TÉLÉCHARGER IMAGE JPEG + DESIGN STUDIO
 // ═══════════════════════════════════════════════════
-async function downloadImage(){
-  toast("⏳ Génération de l'image…");
-  // Render the current list pane
-  goTab('list');
-  await new Promise(r=>setTimeout(r,200));
-  const el = document.getElementById('cats-grid');
-  try{
-    const canvas = await html2canvas(el,{
-      backgroundColor:'#17171f',
-      scale:2,
-      useCORS:true,
-      logging:false
+function optionLabel(key){return (OPTIONS.find(o=>o.key===key)||OPTIONS[0]).label;}
+function optionColor(key){return (OPTIONS.find(o=>o.key===key)||OPTIONS[0]).color;}
+function getPosterRows(filter='filled'){
+  const out=[];
+  Object.entries(DATA).forEach(([cat,cfg])=>{
+    const rows=[];
+    cfg.items.forEach(item=>{
+      if(cfg.mode==='single'){
+        const v=answers[item]||'unknown';
+        const keep = filter==='all' || (filter==='filled' && v!=='unknown') || (filter==='positive' && ['absolute','love','ok','maybe'].includes(v));
+        if(keep) rows.push({name:item,val:v});
+      }else{
+        [['give','Donner'],['receive','Recevoir']].forEach(([sfx,label])=>{
+          const v=answers[item+'_'+sfx]||'unknown';
+          const keep = filter==='all' || (filter==='filled' && v!=='unknown') || (filter==='positive' && ['absolute','love','ok','maybe'].includes(v));
+          if(keep) rows.push({name:item+' · '+label,val:v});
+        });
+      }
     });
-    const link = document.createElement('a');
-    link.download = `kinklist-${username}-${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.jpg`;
-    link.href = canvas.toDataURL('image/jpeg', 0.92);
-    link.click();
-    toast('✓ Image téléchargée !');
-  }catch(e){
-    toast('⚠ Erreur génération image');
-    console.error(e);
-  }
+    if(rows.length) out.push({cat,rows});
+  });
+  return out;
+}
+function buildPosterHTML(){
+  const filter=document.getElementById('studio-filter')?.value||'filled';
+  const rows=getPosterRows(filter);
+  const filled=Object.values(answers).filter(v=>v&&v!=='unknown').length;
+  const total=Object.values(DATA).reduce((a,c)=>a+(c.mode==='dual'?c.items.length*2:c.items.length),0);
+  const title=esc(document.getElementById('studio-title')?.value||`KinkList de ${username||'Moi'}`);
+  const sub=esc(document.getElementById('studio-sub')?.value||`Mes choix, couleurs et préférences · ${new Date().toLocaleDateString('fr-FR')}`);
+  return `
+    <div class="poster-head">
+      <div><div class="poster-title">${title}</div><div class="poster-sub">${sub}</div></div>
+      <div class="poster-progress"><b style="color:var(--accent);font-size:20px">${filled}</b> / ${total}<br>réponses</div>
+    </div>
+    <div class="poster-grid">${rows.map(({cat,rows})=>`
+      <div class="poster-cat">
+        <div class="poster-cat-title">${esc(cat)}</div>
+        ${rows.map(r=>`<div class="poster-item"><span class="poster-name">${esc(r.name)}</span><span class="poster-chip" style="background:${optionColor(r.val)};color:${darkText(r.val)?'white':'#1a1a2e'}">${esc(optionLabel(r.val))}</span></div>`).join('')}
+      </div>`).join('')}
+    </div>
+    <div class="poster-legend">${OPTIONS.filter(o=>o.key!=='unknown').map(o=>`<span><i class="poster-dot" style="background:${o.color}"></i>${esc(o.label)}</span>`).join('')}</div>
+  `;
+}
+function openDesignStudio(){
+  document.getElementById('studio-title').value=`KinkList de ${username||'Moi'}`;
+  document.getElementById('studio-sub').value=`Mes choix, couleurs et préférences`;
+  document.getElementById('modal-studio').classList.remove('hidden');
+  renderPosterPreview();
+}
+function renderPosterPreview(){
+  const el=document.getElementById('poster-preview');
+  if(!el) return;
+  const w=document.getElementById('studio-width')?.value||760;
+  const cols=document.getElementById('studio-cols')?.value||2;
+  const font=document.getElementById('studio-font')?.value||13;
+  const gap=document.getElementById('studio-gap')?.value||14;
+  document.getElementById('v-width').textContent=w;
+  document.getElementById('v-cols').textContent=cols;
+  document.getElementById('v-font').textContent=font;
+  document.getElementById('v-gap').textContent=gap;
+  el.style.width=w+'px';
+  el.style.setProperty('--poster-cols',cols);
+  el.style.setProperty('--poster-font',font+'px');
+  el.style.setProperty('--poster-gap',gap+'px');
+  el.innerHTML=buildPosterHTML();
+}
+async function canvasToDownload(canvas, filename){
+  return new Promise((resolve)=>{
+    canvas.toBlob(blob=>{
+      if(!blob){resolve(false);return;}
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=url; link.download=filename;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(()=>{URL.revokeObjectURL(url);link.remove();resolve(true);},500);
+    },'image/jpeg',0.94);
+  });
+}
+async function downloadDesignedImage(){
+  toast("⏳ Génération de l'image…");
+  renderPosterPreview();
+  await new Promise(r=>setTimeout(r,150));
+  try{
+    const el=document.getElementById('poster-preview');
+    const canvas=await html2canvas(el,{backgroundColor:'#17171f',scale:2,useCORS:true,logging:false,windowWidth:el.scrollWidth,windowHeight:el.scrollHeight});
+    const ok=await canvasToDownload(canvas,`kinklist-${(username||'profil').replace(/\s+/g,'-')}-${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.jpg`);
+    toast(ok?'✓ Image téléchargée !':'⚠ Téléchargement bloqué par le navigateur');
+  }catch(e){toast('⚠ Erreur génération image');console.error(e);}
+}
+async function downloadImage(){
+  // Téléchargement direct : utilise le studio en mode par défaut, au lieu de capturer la page complète.
+  if(document.getElementById('modal-studio').classList.contains('hidden')) openDesignStudio();
+  await downloadDesignedImage();
 }
 // ═══════════════════════════════════════════════════
 //  ADMIN
@@ -936,7 +1070,9 @@ function selUser(i){
 }
 
 function renderInvList(invs){
-  document.getElementById('inv-list').innerHTML=invs.length
+  const invEl=document.getElementById('inv-list');
+  if(!invEl) return;
+  invEl.innerHTML=invs.length
     ?invs.map(inv=>`
       <div class="inv-row">
         <div><div class="inv-name">${esc(inv.label||inv.token)}</div>
@@ -1015,33 +1151,80 @@ function getEditableData(){
 
 function renderMenuEditor(){
   const d = getEditableData();
+  const entries = Object.entries(d);
   const container = document.getElementById('cat-editor-list');
-  container.innerHTML = Object.entries(d).map(([cat,cfg])=>`
-    <div class="editor-wrap" style="margin-bottom:14px" id="cat-wrap-${esc(cat)}">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+  container.innerHTML = entries.map(([cat,cfg], catIndex)=>`
+    <div class="editor-wrap menu-cat" style="margin-bottom:14px" draggable="true"
+      ondragstart="dragCategoryStart(event, ${catIndex})"
+      ondragover="dragCategoryOver(event)"
+      ondrop="dropCategory(event, ${catIndex})"
+      ondragend="dragEnd(event)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span class="drag-handle" title="Glisser pour déplacer">☰</span>
+        <span class="cat-order-num">#${catIndex+1}</span>
         <span class="cat-name">${esc(cat)}</span>
         <span style="font-size:0.72rem;color:var(--muted);background:var(--surface3);border-radius:99px;padding:2px 8px">${cfg.mode==='dual'?'Donner/Recevoir':'Simple'}</span>
-        <button class="btn btn-ghost btn-sm btn-danger" onclick="removeCategory('${esc(cat)}')" style="margin-left:auto">🗑 Supprimer catégorie</button>
+        <button class="move-btn" onclick="moveCategory(${catIndex}, -1)">↑ Monter</button>
+        <button class="move-btn" onclick="moveCategory(${catIndex}, 1)">↓ Descendre</button>
+        <button class="btn btn-ghost btn-sm btn-danger" onclick="removeCategoryByIndex(${catIndex})" style="margin-left:auto">🗑 Supprimer catégorie</button>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" id="items-${esc(cat)}">
-        ${cfg.items.map((item,i)=>`
-          <span class="item-chip">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" class="items-zone">
+        ${cfg.items.map((item,itemIndex)=>`
+          <span class="item-chip" draggable="true"
+            ondragstart="dragItemStart(event, ${catIndex}, ${itemIndex})"
+            ondragover="dragItemOver(event)"
+            ondrop="dropItem(event, ${catIndex}, ${itemIndex})"
+            ondragend="dragEnd(event)">
+            <span class="drag-handle" title="Glisser pour déplacer">⋮⋮</span>
             <span>${esc(item)}</span>
-            <button onclick="removeItem('${esc(cat)}','${esc(item)}')" title="Supprimer">×</button>
+            <button class="move-btn" onclick="moveItem(${catIndex}, ${itemIndex}, -1)" title="Monter / reculer">↑</button>
+            <button class="move-btn" onclick="moveItem(${catIndex}, ${itemIndex}, 1)" title="Descendre / avancer">↓</button>
+            <button onclick="removeItemByIndex(${catIndex}, ${itemIndex})" title="Supprimer">×</button>
           </span>`).join('')}
       </div>
       <div class="add-item-row">
-        <input class="input" id="new-item-${esc(cat)}" placeholder="Ajouter un item…"/>
-        <button class="btn btn-sm" onclick="addItem('${esc(cat)}')">+ Ajouter</button>
+        <input class="input" id="new-item-${catIndex}" placeholder="Ajouter un item…"/>
+        <button class="btn btn-sm" onclick="addItemByIndex(${catIndex})">+ Ajouter</button>
       </div>
     </div>
   `).join('');
 }
 
-function addItem(cat){
-  const inp = document.getElementById('new-item-'+cat);
+function rebuildEditableFromEntries(entries){
+  DATA_EDITABLE = {};
+  entries.forEach(([k,v])=>{ DATA_EDITABLE[k] = v; });
+}
+
+function getCatNameByIndex(catIndex){
+  return Object.keys(getEditableData())[catIndex];
+}
+
+function moveCategory(catIndex, dir){
+  const entries = Object.entries(getEditableData());
+  const newIndex = catIndex + dir;
+  if(newIndex < 0 || newIndex >= entries.length) return;
+  const [moved] = entries.splice(catIndex, 1);
+  entries.splice(newIndex, 0, moved);
+  rebuildEditableFromEntries(entries);
+  renderMenuEditor();
+  toast('✓ Catégorie déplacée');
+}
+
+function removeCategoryByIndex(catIndex){
+  const cat = getCatNameByIndex(catIndex);
+  if(!cat) return;
+  if(!confirm('Supprimer la catégorie "'+cat+'" et tous ses items ?')) return;
+  const d = getEditableData();
+  delete d[cat];
+  renderMenuEditor();
+  toast('✓ Catégorie supprimée');
+}
+
+function addItemByIndex(catIndex){
+  const cat = getCatNameByIndex(catIndex);
+  const inp = document.getElementById('new-item-'+catIndex);
   const val = inp.value.trim();
-  if(!val) return;
+  if(!cat || !val) return;
   const d = getEditableData();
   if(!d[cat].items.includes(val)){
     d[cat].items.push(val);
@@ -1053,18 +1236,94 @@ function addItem(cat){
   }
 }
 
-function removeItem(cat, item){
-  const d = getEditableData();
-  d[cat].items = d[cat].items.filter(i=>i!==item);
+function moveItem(catIndex, itemIndex, dir){
+  const cat = getCatNameByIndex(catIndex);
+  if(!cat) return;
+  const items = getEditableData()[cat].items;
+  const newIndex = itemIndex + dir;
+  if(newIndex < 0 || newIndex >= items.length) return;
+  const [moved] = items.splice(itemIndex, 1);
+  items.splice(newIndex, 0, moved);
+  renderMenuEditor();
+  toast('✓ Item déplacé');
+}
+
+function removeItemByIndex(catIndex, itemIndex){
+  const cat = getCatNameByIndex(catIndex);
+  if(!cat) return;
+  getEditableData()[cat].items.splice(itemIndex, 1);
   renderMenuEditor();
 }
 
-function removeCategory(cat){
-  if(!confirm('Supprimer la catégorie "'+cat+'" et tous ses items ?')) return;
-  const d = getEditableData();
-  delete d[cat];
+let draggedCategoryIndex = null;
+let draggedItem = null;
+
+function dragCategoryStart(event, catIndex){
+  draggedCategoryIndex = catIndex;
+  draggedItem = null;
+  event.currentTarget.classList.add('dragging');
+  event.dataTransfer.effectAllowed = 'move';
+}
+function dragCategoryOver(event){
+  if(draggedCategoryIndex !== null) event.preventDefault();
+}
+function dropCategory(event, targetIndex){
+  event.preventDefault();
+  if(draggedCategoryIndex === null || draggedCategoryIndex === targetIndex) return;
+  const entries = Object.entries(getEditableData());
+  const [moved] = entries.splice(draggedCategoryIndex, 1);
+  entries.splice(targetIndex, 0, moved);
+  rebuildEditableFromEntries(entries);
+  draggedCategoryIndex = null;
   renderMenuEditor();
-  toast('✓ Catégorie supprimée');
+  toast('✓ Catégorie déplacée');
+}
+
+function dragItemStart(event, catIndex, itemIndex){
+  draggedItem = {catIndex, itemIndex};
+  draggedCategoryIndex = null;
+  event.currentTarget.classList.add('dragging');
+  event.dataTransfer.effectAllowed = 'move';
+  event.stopPropagation();
+}
+function dragItemOver(event){
+  if(draggedItem) event.preventDefault();
+}
+function dropItem(event, targetCatIndex, targetItemIndex){
+  event.preventDefault();
+  event.stopPropagation();
+  if(!draggedItem) return;
+  const fromCat = getCatNameByIndex(draggedItem.catIndex);
+  const toCat = getCatNameByIndex(targetCatIndex);
+  if(!fromCat || !toCat) return;
+  const d = getEditableData();
+  const [moved] = d[fromCat].items.splice(draggedItem.itemIndex, 1);
+  let insertIndex = targetItemIndex;
+  if(fromCat === toCat && draggedItem.itemIndex < targetItemIndex) insertIndex--;
+  d[toCat].items.splice(insertIndex, 0, moved);
+  draggedItem = null;
+  renderMenuEditor();
+  toast('✓ Item déplacé');
+}
+function dragEnd(event){
+  event.currentTarget.classList.remove('dragging');
+  draggedCategoryIndex = null;
+}
+
+// Compatibilité avec les anciens boutons si jamais une ancienne partie HTML appelle ces fonctions
+function addItem(cat){
+  const idx = Object.keys(getEditableData()).indexOf(cat);
+  if(idx >= 0) addItemByIndex(idx);
+}
+function removeItem(cat, item){
+  const d = getEditableData();
+  if(!d[cat]) return;
+  d[cat].items = d[cat].items.filter(i=>i!==item);
+  renderMenuEditor();
+}
+function removeCategory(cat){
+  const idx = Object.keys(getEditableData()).indexOf(cat);
+  if(idx >= 0) removeCategoryByIndex(idx);
 }
 
 function addCategory(){
