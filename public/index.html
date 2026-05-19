@@ -235,10 +235,10 @@
     <p class="splash-sub">Explore et partage tes préférences avec ton partenaire. Tes données restent privées.</p>
 
     <label class="field-label" for="in-pseudo">Ton pseudo (visible par toi seul)</label>
-    <input class="input" id="in-pseudo" placeholder="Ex : Luna, Mystère…" autocomplete="off"/>
+    <input class="input" id="in-pseudo" placeholder="Ex : Luna, Mystère…" autocomplete="off" oninput="document.getElementById('btn-start').disabled=!this.value.trim()"/>
 
     <label class="field-label" for="in-email">Ton email <span style="color:var(--faint)">(optionnel)</span></label>
-    <input class="input" id="in-email" type="email" placeholder="toi@exemple.com"/>
+    <input class="input" id="in-email" placeholder="toi@exemple.com" autocomplete="off"/>
 
     <button class="btn btn-full" id="btn-start" disabled onclick="startApp()">Commencer mon profil →</button>
 
